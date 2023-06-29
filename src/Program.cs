@@ -8,7 +8,6 @@ using static System.Net.Mime.MediaTypeNames;
  * TODO:
  * - GetImage (s)
  * - GetKeyValuePair (s)
- * - GetSelectedRaisedPet
  * - GetAnnouncementsByUser
  * - GetUserMessageQueue
  * - GetSubscriptionInfo
