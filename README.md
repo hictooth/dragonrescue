@@ -8,11 +8,7 @@ You can either run the tool yourself, or [submit your School of Dragons account 
 
 ## Running
 
-To build, run the command:
-
-```
-dotnet publish -c Release --self-contained dragonrescue.sln
-```
+Either compile the tool yourself using the [instructions under Compiling below](#Compiling), or [download the latest release for your computer](https://github.com/hictooth/dragonrescue/releases/latest).
 
 Then create a new empty folder for the export to be saved to
 
@@ -20,10 +16,18 @@ Then create a new empty folder for the export to be saved to
 mkdir /tmp/sod-export
 ```
 
-Finally run the export tool:
+Finally run the export tool with your School of Dragons username and password:
 
 ```
 ./dragonrescue "username" "password" /tmp/sod-export
+```
+
+### Compiling
+
+To compile, run the command:
+
+```
+dotnet publish -c Release --self-contained dragonrescue.sln
 ```
 
 ## Status
