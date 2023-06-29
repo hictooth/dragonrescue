@@ -29,7 +29,8 @@ WriteToFile(outputPath, "LoginParent.xml", loginInfo);
 
 ParentLoginInfo loginInfoObject = XmlUtil.DeserializeXml<ParentLoginInfo>(loginInfo);
 if (loginInfoObject.Status != MembershipUserStatus.Success) {
-    Console.WriteLine("Login error. Please check username and password, or try again in a few minutes.");
+    Console.WriteLine("Login error. Please check username and password.");
+    Console.WriteLine("If you have the right username and password, then please try again later. The School of Dragons servers are currently frequently overloaded and busy at the moment, so you may need to wait from a few minutes to a few hours.");
     Environment.Exit(1);
 }
 
