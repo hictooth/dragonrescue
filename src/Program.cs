@@ -6,18 +6,16 @@ using static System.Net.Mime.MediaTypeNames;
 
 /*
  * TODO:
- * - GetImage (s)
  * - GetKeyValuePair (s)
  * - GetAnnouncementsByUser
- * - GetUserMessageQueue
- * - GetSubscriptionInfo
  */
 
 const string KEY = "56BB211B-CF06-48E1-9C1D-E40B5173D759";
 
 string[] commandlineArgs = Environment.GetCommandLineArgs();
-if (commandlineArgs.Length < 3) {
+if (commandlineArgs.Length < 4) {
     Console.WriteLine("Not enough args.\nUsage: ./dragonrescue <username> <password> <full_output_path>");
+    Environment.Exit(0);
 }
 string username = commandlineArgs[1];
 string password = commandlineArgs[2];
@@ -38,6 +36,10 @@ if (loginInfoObject.Status != MembershipUserStatus.Success) {
 Console.WriteLine("Fetching account information...");
 string parentInfo = await GetUserInfoByApiToken(client, loginInfoObject.ApiToken);
 WriteToFile(outputPath, "GetUserInfoByApiToken.xml", parentInfo);
+
+Console.WriteLine("Fetching subscription information...");
+string subscriptionInfo = await GetSubscriptionInfo(client, loginInfoObject.ApiToken);
+WriteToFile(outputPath, "GetSubscriptionInfo.xml", subscriptionInfo);
 
 Console.WriteLine("Fetching child profiles...");
 string children = await GetDetailedChildList(client, loginInfoObject.ApiToken);
@@ -97,6 +99,25 @@ foreach (UserProfileData profile in childrenObject.UserProfiles) {
     string rooms = await GetUserRoomList(client, childApiToken, profile.ID);
     WriteToChildFile(outputPath, profile.ID, "GetUserRoomList.xml", rooms);
 
+    Console.WriteLine(string.Format("Fetching messages for {0}...", profile.AvatarInfo.UserInfo.FirstName));
+    string messages = await GetUserMessageQueue(client, childApiToken);
+    WriteToChildFile(outputPath, profile.ID, "GetUserMessageQueue.xml", messages);
+
+    for (int i = 0; i < 500; i++) { // hard limit of 500 for this scrape, hopefully no one has more than that?
+        Console.WriteLine(string.Format("Fetching image slot {0} for {1}...", i, profile.AvatarInfo.UserInfo.FirstName));
+        string imageData = await GetImageData(client, childApiToken, i);
+        ImageData imageDataObject = XmlUtil.DeserializeXml<ImageData>(imageData);
+        if (imageDataObject is null || string.IsNullOrWhiteSpace(imageDataObject.ImageURL)) break;
+        WriteToChildFile(outputPath, profile.ID, String.Format("{0}-{1}", i, "GetImageData.xml"), imageData);
+
+        // now get the image itself
+        Console.WriteLine(string.Format("Downloading image {0} for {1}...", i, profile.AvatarInfo.UserInfo.FirstName));
+        string imageUrl = imageDataObject.ImageURL;
+        Uri uri = new Uri(imageUrl);
+        string filename = Path.GetFileName(uri.LocalPath);
+        DownloadFile(outputPath, filename, imageUrl);
+    }
+
     UserRoomResponse roomsObject = XmlUtil.DeserializeXml<UserRoomResponse>(rooms);
     foreach (UserRoom room in roomsObject.UserRoomList) {
         if (room.RoomID is null) continue;
@@ -121,6 +142,13 @@ static void WriteToChildFile(string path, string childId, string name, string co
     using (StreamWriter writer = new StreamWriter(fullPath)) {
         writer.WriteLine(contents);
     }
+}
+
+static void DownloadFile(string path, string name, string downloadUrl) {
+    string fullPath = Path.Join(path, name);
+    Console.WriteLine(fullPath);
+    var webClient = new WebClient();
+    webClient.DownloadFile(downloadUrl, fullPath);
 }
 
 
@@ -417,4 +445,47 @@ static async Task<string> GetSelectedRaisedPet(HttpClient client, string apiToke
     var bodyRaw = await response.Content.ReadAsStringAsync();
     return bodyRaw;
     //return XmlUtil.DeserializeXml<RaisedPetData[]>(bodyRaw);
+}
+
+
+static async Task<string> GetUserMessageQueue(HttpClient client, string apiToken) {
+    var formContent = new FormUrlEncodedContent(new[] {
+        new KeyValuePair<string, string>("apiToken", apiToken),
+        new KeyValuePair<string, string>("apiKey", "b99f695c-7c6e-4e9b-b0f7-22034d799013"),
+        new KeyValuePair<string, string>("showOldMessages", "true"),
+        new KeyValuePair<string, string>("showDeletedMessages", "true"),
+    });
+
+    var response = await client.PostAsync("https://common.api.jumpstart.com/MessagingWebService.asmx/GetUserMessageQueue", formContent);
+    var bodyRaw = await response.Content.ReadAsStringAsync();
+    return bodyRaw;
+    //return XmlUtil.DeserializeXml<ArrayOfMessageInfo>(bodyRaw);
+}
+
+
+static async Task<string> GetSubscriptionInfo(HttpClient client, string apiToken) {
+    var formContent = new FormUrlEncodedContent(new[] {
+        new KeyValuePair<string, string>("apiToken", apiToken),
+        new KeyValuePair<string, string>("apiKey", "b99f695c-7c6e-4e9b-b0f7-22034d799013"),
+    });
+
+    var response = await client.PostAsync("https://common.api.jumpstart.com/MembershipWebService.asmx/GetSubscriptionInfo", formContent);
+    var bodyRaw = await response.Content.ReadAsStringAsync();
+    return bodyRaw;
+    //return XmlUtil.DeserializeXml<ArrayOfMessageInfo>(bodyRaw);
+}
+
+
+static async Task<string> GetImageData(HttpClient client, string apiToken, int imageSlot) {
+    var formContent = new FormUrlEncodedContent(new[] {
+        new KeyValuePair<string, string>("apiToken", apiToken),
+        new KeyValuePair<string, string>("apiKey", "b99f695c-7c6e-4e9b-b0f7-22034d799013"),
+        new KeyValuePair<string, string>("ImageType", "EggColor"),
+        new KeyValuePair<string, string>("ImageSlot", imageSlot.ToString()),
+    });
+
+    var response = await client.PostAsync("https://contentserver.api.jumpstart.com/ContentWebService.asmx/GetImage", formContent);
+    var bodyRaw = await response.Content.ReadAsStringAsync();
+    return bodyRaw;
+    //return XmlUtil.DeserializeXml<ImageData>(bodyRaw);
 }

@@ -49,13 +49,13 @@ dotnet publish -c Release --self-contained dragonrescue.sln
 - active dragons
 - rooms
 - room items (I think this is eggs?)
+- Images (of your dragons)
+- Messages
+- Subscription info
 
 ### What is not exported
 
 Basically anything not on the above list, including but not limited to:
 
-- Images (of your dragons)
 - GetValuePairs
 - Announcements
-- Messages
-- Subscription info
