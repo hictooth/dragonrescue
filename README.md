@@ -1,10 +1,10 @@
 # DragonRescue
 
+## As of July 1st, 07:20 UTC, this no longer works as the School of Dragons servers have been switched off.
+
 An export tool for your School of Dragons account data.
 
-On 7th June, 2023, School of Dragons announced they were "sunsetting" the game, and turning the servers off on the 30th of June. While there are now works to create server emulators,
-
-You can either run the tool yourself, or [submit your School of Dragons account info](https://forms.gle/yDYfQgp5E5bUiNKn7) and have the tool run for you.
+On 7th June, 2023, School of Dragons announced they were "sunsetting" the game, and turning the servers off on the 30th of June.
 
 ## Running
 
